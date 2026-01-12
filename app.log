@@ -1,0 +1,12 @@
+[2026-01-12T13:31:17.478Z] [INFO] process start {"argv":["C:\\Program Files\\nodejs\\node.exe","c:\\Users\\82103\\Documents\\GitHub\\naver_reserv\\index.js"],"cwd":"c:\\Users\\82103\\Documents\\GitHub\\naver_reserv","execPath":"C:\\Program Files\\nodejs\\node.exe","node":"v20.11.1","platform":"win32"}
+[2026-01-12T13:31:17.481Z] [INFO] logPath c:\Users\82103\Documents\GitHub\naver_reserv\app.log
+[2026-01-12T13:31:17.690Z] [INFO] naverReserv start
+[2026-01-12T13:31:17.691Z] [INFO] creating WebDriver
+[2026-01-12T13:31:17.712Z] [INFO] using chromedriver {"driverPath":"c:\\Users\\82103\\Documents\\GitHub\\naver_reserv\\node_modules\\chromedriver\\lib\\chromedriver\\chromedriver.exe","exists":true}
+[2026-01-12T13:31:19.747Z] [ERROR] naverReserv error SessionNotCreatedError: session not created: This version of ChromeDriver only supports Chrome version 131
+Current browser version is 143.0.7499.193 with binary path C:\Program Files\Google\Chrome\Application\chrome.exe
+    at Object.throwDecodedError (c:\Users\82103\Documents\GitHub\naver_reserv\node_modules\selenium-webdriver\lib\error.js:521:15)
+    at parseHttpResponse (c:\Users\82103\Documents\GitHub\naver_reserv\node_modules\selenium-webdriver\lib\http.js:514:13)
+    at Executor.execute (c:\Users\82103\Documents\GitHub\naver_reserv\node_modules\selenium-webdriver\lib\http.js:446:28)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+[2026-01-12T13:31:19.752Z] [INFO] naverReserv finally
