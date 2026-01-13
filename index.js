@@ -9,6 +9,10 @@ const fs = require("node:fs");
 const path = require("node:path");
 const readline = require("node:readline");
 
+/**
+ * 사용자 입력 받는 함수
+ * @param {*} query 질문 문자열 ex) "네이버 아이디를 입력하세요: "
+ */
 function askQuestion(query) {
   const rl = readline.createInterface({
     input: process.stdin,
@@ -22,6 +26,7 @@ function askQuestion(query) {
     })
   );
 }
+
 function createFileLogger() {
   const execBase = (process.execPath || "").toLowerCase();
   const baseDir = execBase.endsWith("\\node.exe")
