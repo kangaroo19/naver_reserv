@@ -101,7 +101,7 @@ const chrome = require("selenium-webdriver/chrome");
 
 // const BASIC_URL = "https://m.booking.naver.com/booking/13/bizes/987076/items/5336963"; // 실제로 사용할거
 const BASIC_URL =
-  "https://m.booking.naver.com/booking/6/bizes/551459/items/4033828"; // 테스트용
+  "https://m.booking.naver.com/booking/6/bizes/563788/items/4035008"; // 테스트용
 
 // START_DATE, START_DATE_TIEM 의 yyyy-mm-dd 값은 같아야함
 

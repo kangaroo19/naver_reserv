@@ -10,3 +10,5 @@ Current browser version is 143.0.7499.193 with binary path C:\Program Files\Goog
     at Executor.execute (c:\Users\82103\Documents\GitHub\naver_reserv\node_modules\selenium-webdriver\lib\http.js:446:28)
     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
 [2026-01-12T13:31:19.752Z] [INFO] naverReserv finally
+[2026-01-13T11:59:04.919Z] [INFO] process start {"argv":["C:\\Program Files\\nodejs\\node.exe","c:\\Users\\82103\\Documents\\GitHub\\naver_reserv\\index.js"],"cwd":"c:\\Users\\82103\\Documents\\GitHub\\naver_reserv","execPath":"C:\\Program Files\\nodejs\\node.exe","node":"v20.11.1","platform":"win32"}
+[2026-01-13T11:59:04.921Z] [INFO] logPath c:\Users\82103\Documents\GitHub\naver_reserv\app.log
