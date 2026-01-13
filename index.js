@@ -35,64 +35,8 @@ function askQuestion(query, providedAnswer) {
   );
 }
 
-function createFileLogger() {
-  const execBase = (process.execPath || "").toLowerCase();
-  const baseDir = execBase.endsWith("\\node.exe")
-    ? process.cwd()
-    : path.dirname(process.execPath);
-  const logPath = path.join(baseDir, "app.log");
-
-  function safeToString(value) {
-    if (value instanceof Error) {
-      return value.stack || value.message || String(value);
-    }
-    if (typeof value === "string") return value;
-    try {
-      return JSON.stringify(value);
-    } catch {
-      return String(value);
-    }
-  }
-
-  function writeLine(line) {
-    try {
-      fs.appendFileSync(logPath, line + "\n", { encoding: "utf8" });
-    } catch (e) {
-      // 마지막 수단: 콘솔로라도 남김
-      try {
-        console.error("[logger] failed to write log file:", logPath, e);
-      } catch {}
-    }
-  }
-
-  function log(level, message, extra) {
-    const ts = new Date().toISOString();
-    const parts = [`[${ts}]`, `[${level}]`, message];
-    if (extra !== undefined) parts.push(safeToString(extra));
-    writeLine(parts.join(" "));
-  }
-
-  log("INFO", "process start", {
-    argv: process.argv,
-    cwd: process.cwd(),
-    execPath: process.execPath,
-    node: process.version,
-    platform: process.platform,
-  });
-  log("INFO", "logPath", logPath);
-
-  process.on("uncaughtException", (err) => {
-    log("FATAL", "uncaughtException", err);
-  });
-  process.on("unhandledRejection", (reason) => {
-    log("FATAL", "unhandledRejection", reason);
-  });
-
-  return { baseDir, logPath, log };
-}
-
-const logger = createFileLogger();
-const log = logger.log;
+const { FileLogger } = require("./logger");
+const logger = new FileLogger();
 
 function resolveChromedriverPath() {
   const besideExe = path.join(logger.baseDir, "chromedriver.exe");
@@ -122,18 +66,18 @@ async function naverReserv(userName, startDate, startDateTime) {
   const options = new chrome.Options();
   options.addArguments(`user-data-dir=C:\\user_data\\${userName}`);
 
-  log("INFO", "naverReserv start");
+  logger.log("INFO", "naverReserv start");
   let driver;
   try {
     // WebDriver 초기화
-    log("INFO", "creating WebDriver");
+    logger.log("INFO", "creating WebDriver");
     const driverPath = resolveChromedriverPath();
     if (!driverPath) {
       throw new Error(
         "chromedriver.exe를 찾지 못했습니다. dist\\chromedriver.exe가 app.exe와 같은 폴더에 있어야 합니다."
       );
     }
-    log("INFO", "using chromedriver", {
+    logger.log("INFO", "using chromedriver", {
       driverPath,
       exists: fs.existsSync(driverPath),
     });
@@ -147,18 +91,18 @@ async function naverReserv(userName, startDate, startDateTime) {
 
     // 페이지 열기
     const url = `${BASIC_URL}?area=bmp&lang=ko&map-search=1&service-target=map-pc&startDate=${startDate}&startDateTime=${startDateTime}&theme=place`;
-    log("INFO", "navigating", url);
+    logger.log("INFO", "navigating", url);
     await driver.get(url);
-    log("INFO", "page loaded");
+    logger.log("INFO", "page loaded");
 
-    log("INFO", "scrolling to bottom");
+    logger.log("INFO", "scrolling to bottom");
     await driver.executeScript(
       "window.scrollTo(0, document.body.scrollHeight)"
     );
     await sleep(300);
 
     // 로그인 화면 넘어가는 버튼
-    log("INFO", "waiting next button");
+    logger.log("INFO", "waiting next button");
     const nextButton = await driver.wait(
       until.elementLocated(
         By.xpath('//*[@id="root"]/main/div[4]/div/button[2]')
@@ -166,19 +110,19 @@ async function naverReserv(userName, startDate, startDateTime) {
       10000
     );
 
-    log("INFO", "next button located");
+    logger.log("INFO", "next button located");
 
     // 클릭 가능한지 확인하고 클릭
-    log("INFO", "waiting next button visible");
+    logger.log("INFO", "waiting next button visible");
     await driver.wait(until.elementIsVisible(nextButton), 10000);
-    log("INFO", "clicking next button");
+    logger.log("INFO", "clicking next button");
     await nextButton.click();
-    log("INFO", "clicked next button");
+    logger.log("INFO", "clicked next button");
   } catch (err) {
-    log("ERROR", "naverReserv error", err);
+    logger.log("ERROR", "naverReserv error", err);
     console.error("에러 발생:", err);
   } finally {
-    log("INFO", "naverReserv finally");
+    logger.log("INFO", "naverReserv finally");
     // 브라우저 닫기
     // await driver.quit();
   }
@@ -215,13 +159,13 @@ async function main() {
       `입력된 정보: ${userName}, ${startDate}, ${startTime} (변환전: ${startTimeInput})`
     );
     console.log(`계산된 startDateTime: ${startDateTime}`);
-    
+
     // await askQuestion("\n실행하시겠습니까? 엔터키를 입력하면 바로 실행됩니다");
 
     await naverReserv(userName, startDate, startDateTime);
   } catch (e) {
     console.error("Main execution failed:", e);
-    log("FATAL", "Main execution failed", e);
+    logger.log("FATAL", "Main execution failed", e);
   }
 }
 
