@@ -12,8 +12,16 @@ const readline = require("node:readline");
 /**
  * 사용자 입력 받는 함수
  * @param {*} query 질문 문자열 ex) "네이버 아이디를 입력하세요: "
+ * @param {*} providedAnswer 테스트/자동화를 위한 사전 제공 답변 (옵션)
  */
-function askQuestion(query) {
+function askQuestion(query, providedAnswer) {
+  if (providedAnswer !== undefined) {
+    try {
+      process.stdout.write(`${query}${String(providedAnswer)}\n`);
+    } catch {}
+    return Promise.resolve(providedAnswer);
+  }
+
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -178,12 +186,17 @@ async function naverReserv(userName, startDate, startDateTime) {
 
 async function main() {
   try {
-    const userName = await askQuestion("네이버 아이디를 입력하세요 : ");
+    const userName = await askQuestion(
+      "네이버 아이디를 입력하세요 : ",
+      "1000jjj"
+    );
     const startDate = await askQuestion(
-      "예약 날짜를 입력하세요 (예: 2026-01-17): "
+      "예약 날짜를 입력하세요 (예: 2026-01-17): ",
+      "2026-01-16"
     );
     const startTimeInput = await askQuestion(
-      "예약 시간을 입력하세요 (30분 단위, HHMM 형식, 예: 1600): "
+      "예약 시간을 입력하세요 (30분 단위, HHMM 형식, 예: 1600): ",
+      "1300"
     );
 
     // HHMM 형식으로 입력받았을 경우 HH:MM으로 변환
@@ -202,8 +215,8 @@ async function main() {
       `입력된 정보: ${userName}, ${startDate}, ${startTime} (변환전: ${startTimeInput})`
     );
     console.log(`계산된 startDateTime: ${startDateTime}`);
-
-    await askQuestion("\n실행하시겠습니까? 엔터키를 입력하면 바로 실행됩니다");
+    
+    // await askQuestion("\n실행하시겠습니까? 엔터키를 입력하면 바로 실행됩니다");
 
     await naverReserv(userName, startDate, startDateTime);
   } catch (e) {
