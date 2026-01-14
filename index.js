@@ -58,7 +58,7 @@ const chrome = require("selenium-webdriver/chrome");
 
 // const BASIC_URL = "https://m.booking.naver.com/booking/13/bizes/987076/items/5336963"; // 실제로 사용할거
 const BASIC_URL =
-  "https://m.booking.naver.com/booking/6/bizes/563788/items/4035008"; // 테스트용
+  "https://m.booking.naver.com/booking/6/bizes/551459/items/4033828";
 
 // START_DATE, START_DATE_TIEM 의 yyyy-mm-dd 값은 같아야함
 
@@ -91,38 +91,98 @@ async function naverReserv(userName, startDate, startDateTime) {
 
     // 페이지 열기
     const url = `${BASIC_URL}?area=bmp&lang=ko&map-search=1&service-target=map-pc&startDate=${startDate}&startDateTime=${startDateTime}&theme=place`;
-    logger.log("INFO", "navigating", url);
+    logger.log("INFO", "페이지 이동", url);
     await driver.get(url);
-    logger.log("INFO", "page loaded");
+    logger.log("INFO", "페이지 로드 완료");
 
-    logger.log("INFO", "scrolling to bottom");
+    logger.log("INFO", "페이지 하단으로 스크롤");
     await driver.executeScript(
       "window.scrollTo(0, document.body.scrollHeight)"
     );
     await sleep(300);
 
-    // 로그인 화면 넘어가는 버튼
-    logger.log("INFO", "waiting next button");
+    logger.log("INFO", "다음 버튼 찾기 시작");
+
+    // 결제창으로 넘어가는 '다음' 버튼 찾기위한 객체
+    const findNextButtonLocation = By.xpath(
+      '//*[@id="root"]/main/div[4]/div/button'
+    );
     const nextButton = await driver.wait(
-      until.elementLocated(
-        By.xpath('//*[@id="root"]/main/div[4]/div/button[2]')
-      ),
+      until.elementLocated(findNextButtonLocation),
       10000
     );
+    logger.log("INFO", "다음 버튼 찾기 완료");
 
-    logger.log("INFO", "next button located");
+    logger.log("INFO", "다음 버튼 뷰포트로 스크롤");
 
-    // 클릭 가능한지 확인하고 클릭
-    logger.log("INFO", "waiting next button visible");
-    await driver.wait(until.elementIsVisible(nextButton), 10000);
-    logger.log("INFO", "clicking next button");
-    await nextButton.click();
-    logger.log("INFO", "clicked next button");
+    // '다읍' 버튼 뷰포트로 스크롤
+    await driver.executeScript(
+      "arguments[0].scrollIntoView({block:'center', inline:'center'});",
+      nextButton
+    );
+
+    // 가시성/활성 대기
+    logger.log("INFO", "다음 버튼 가시성/활성 대기");
+    await driver.wait(until.elementIsVisible(nextButton), 5000);
+    await driver.wait(until.elementIsEnabled(nextButton), 5000);
+
+    // 클릭 시도 → 실패하면 JS 클릭 백업
+    logger.log("INFO", "다음 버튼 클릭 시도");
+    try {
+      await nextButton.click();
+      logger.log("INFO", "다음 버튼 클릭 완료");
+    } catch (e) {
+      logger.log("WARN", "표준 클릭 실패, JS 클릭으로 대체", e);
+      await driver.executeScript("arguments[0].click();", nextButton);
+    }
+
+    await sleep(500); // 이거 없으면 하단 클릭이벤트 안먹음
+
+    const checkboxes = await driver.findElements(By.tagName("label"));
+    for (const checkbox of checkboxes) {
+      const isChecked = await checkbox.isSelected();
+      if (!isChecked) {
+        await checkbox.click();
+      }
+    }
+    await driver.executeScript(
+      "window.scrollTo(0, document.body.scrollHeight)"
+    );
+    logger.log("INFO", "모든 체크박스에 체크 완료");
+
+    // 결제하기 버튼 찾기
+    logger.log("INFO", "결제하기 버튼 찾기 시작");
+    const payBtnLocator = By.xpath(
+      "//button[normalize-space(.)='동의하고 결제하기']"
+    );
+
+    const payBtn = await driver.wait(
+      until.elementLocated(payBtnLocator),
+      10000
+    );
+    logger.log("INFO", "결제하기 버튼 찾기 완료");
+    logger.log("INFO", "결제하기 버튼 뷰포트로 스크롤");
+    await driver.executeScript(
+      "arguments[0].scrollIntoView({block:'center', inline:'center'});",
+      payBtn
+    );
+
+    await driver.wait(until.elementIsVisible(payBtn), 5000).catch(() => {});
+    await driver.wait(until.elementIsEnabled(payBtn), 5000).catch(() => {});
+
+    logger.log("INFO", "결제하기 버튼 클릭 시도");
+    try {
+      await payBtn.click();
+      logger.log("INFO", "결제하기 버튼 클릭 완료");
+    } catch {
+      await driver.executeScript("arguments[0].click();", payBtn);
+    }
+    logger.log("INFO", "예약 성공");
   } catch (err) {
     logger.log("ERROR", "naverReserv error", err);
     console.error("에러 발생:", err);
   } finally {
-    logger.log("INFO", "naverReserv finally");
+    logger.log("INFO", "naverReserv end");
     // 브라우저 닫기
     // await driver.quit();
   }
@@ -136,7 +196,7 @@ async function main() {
     );
     const startDate = await askQuestion(
       "예약 날짜를 입력하세요 (예: 2026-01-17): ",
-      "2026-01-16"
+      "2026-01-22"
     );
     const startTimeInput = await askQuestion(
       "예약 시간을 입력하세요 (30분 단위, HHMM 형식, 예: 1600): ",
