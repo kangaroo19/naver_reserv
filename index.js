@@ -53,18 +53,42 @@ function resolveChromedriverPath() {
   return null;
 }
 
+async function hasNaverLoginCookies(driver) {
+  const required = new Set(["NID_AUT", "nid_inf", "NID_SES"]);
+  const cookies = await driver.manage().getCookies();
+  const names = new Set(cookies.map((c) => c.name));
+  for (const n of required) {
+    if (!names.has(n)) return false;
+  }
+  return true;
+}
+
+async function waitForLoginCookies(
+  driver,
+  timeoutMs = 180000,
+  intervalMs = 1000
+) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    try {
+      if (await hasNaverLoginCookies(driver)) return true;
+    } catch {}
+    await sleep(intervalMs);
+  }
+  return false;
+}
+
 const { Builder, By, until } = require("selenium-webdriver");
 const chrome = require("selenium-webdriver/chrome");
 
-// const BASIC_URL = "https://m.booking.naver.com/booking/13/bizes/987076/items/5336963"; // 실제로 사용할거
 const BASIC_URL =
-  "https://m.booking.naver.com/booking/6/bizes/551459/items/4033828";
+  "https://m.booking.naver.com/booking/6/bizes/563788/items/4035008";
 
 // START_DATE, START_DATE_TIEM 의 yyyy-mm-dd 값은 같아야함
 
-async function naverReserv(userName, startDate, startDateTime) {
+async function naverReserv(naverId, startDate, startDateTime) {
   const options = new chrome.Options();
-  options.addArguments(`user-data-dir=C:\\user_data\\${userName}`);
+  options.addArguments(`user-data-dir=C:\\user_data\\${naverId}`);
 
   logger.log("INFO", "naverReserv start");
   let driver;
@@ -89,10 +113,28 @@ async function naverReserv(userName, startDate, startDateTime) {
       .setChromeOptions(options)
       .build();
 
-    // 페이지 열기
+    // 로그인 쿠키 확인 및 유도
     const url = `${BASIC_URL}?area=bmp&lang=ko&map-search=1&service-target=map-pc&startDate=${startDate}&startDateTime=${startDateTime}&theme=place`;
     logger.log("INFO", "페이지 이동", url);
     await driver.get(url);
+    logger.log("INFO", "로그인 상태 점검");
+    const loggedIn = await hasNaverLoginCookies(driver);
+    if (!loggedIn) {
+      logger.log("INFO", "로그인 필요: 로그인 페이지로 이동");
+      await driver.get(
+        "https://nid.naver.com/nidlogin.login?realname=Y&svctype=262144"
+      );
+      await waitForLoginCookies(driver, 180000).catch(() => {});
+      logger.log(
+        "INFO",
+        "로그인 완료/타임아웃 처리 후 브라우저 종료. 다음 실행에서 예약 진행"
+      );
+      await driver.quit();
+      return;
+    }
+
+    // 페이지 열기
+
     logger.log("INFO", "페이지 로드 완료");
 
     logger.log("INFO", "페이지 하단으로 스크롤");
@@ -190,17 +232,12 @@ async function naverReserv(userName, startDate, startDateTime) {
 
 async function main() {
   try {
-    const userName = await askQuestion(
-      "네이버 아이디를 입력하세요 : ",
-      "1000jjj"
-    );
+    const naverId = await askQuestion("네이버 아이디를 입력하세요 : ");
     const startDate = await askQuestion(
-      "예약 날짜를 입력하세요 (예: 2026-01-17): ",
-      "2026-01-22"
+      "예약 날짜를 입력하세요 (예: 2026-01-17): "
     );
     const startTimeInput = await askQuestion(
-      "예약 시간을 입력하세요 (30분 단위, HHMM 형식, 예: 1600): ",
-      "1300"
+      "예약 시간을 입력하세요 (30분 단위, HHMM 형식, 예: 1600): "
     );
 
     // HHMM 형식으로 입력받았을 경우 HH:MM으로 변환
@@ -216,13 +253,13 @@ async function main() {
     );
 
     console.log(
-      `입력된 정보: ${userName}, ${startDate}, ${startTime} (변환전: ${startTimeInput})`
+      `입력된 정보: ${naverId}, ${startDate}, ${startTime} (변환전: ${startTimeInput})`
     );
     console.log(`계산된 startDateTime: ${startDateTime}`);
 
-    // await askQuestion("\n실행하시겠습니까? 엔터키를 입력하면 바로 실행됩니다");
+    await askQuestion("\n실행하시겠습니까? 엔터키를 입력하면 바로 실행됩니다");
 
-    await naverReserv(userName, startDate, startDateTime);
+    await naverReserv(naverId, startDate, startDateTime);
   } catch (e) {
     console.error("Main execution failed:", e);
     logger.log("FATAL", "Main execution failed", e);
