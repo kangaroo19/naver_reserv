@@ -31,7 +31,7 @@ function askQuestion(query, providedAnswer) {
     rl.question(query, (ans) => {
       rl.close();
       resolve(ans);
-    })
+    }),
   );
 }
 
@@ -66,7 +66,7 @@ async function hasNaverLoginCookies(driver) {
 async function waitForLoginCookies(
   driver,
   timeoutMs = 180000,
-  intervalMs = 1000
+  intervalMs = 1000,
 ) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
@@ -81,12 +81,15 @@ async function waitForLoginCookies(
 const { Builder, By, until } = require("selenium-webdriver");
 const chrome = require("selenium-webdriver/chrome");
 
-const BASIC_URL =
-  "https://m.booking.naver.com/booking/6/bizes/563788/items/4035008";
+// 상품 선택에 따른 기본 URL 매핑
+const PRODUCT_URLS = {
+  1: "https://m.booking.naver.com/booking/6/bizes/563788/items/4034774", // 잠실 딸기밭케이크 1호
+  2: "https://m.booking.naver.com/booking/6/bizes/563788/items/4035008", // 잠실 딸기밭케이크 미니
+};
 
 // START_DATE, START_DATE_TIEM 의 yyyy-mm-dd 값은 같아야함
 
-async function naverReserv(naverId, startDate, startDateTime) {
+async function naverReserv(naverId, startDate, startDateTime, basicUrl) {
   const options = new chrome.Options();
   options.addArguments(`user-data-dir=C:\\user_data\\${naverId}`);
 
@@ -98,7 +101,7 @@ async function naverReserv(naverId, startDate, startDateTime) {
     const driverPath = resolveChromedriverPath();
     if (!driverPath) {
       throw new Error(
-        "chromedriver.exe를 찾지 못했습니다. dist\\chromedriver.exe가 app.exe와 같은 폴더에 있어야 합니다."
+        "chromedriver.exe를 찾지 못했습니다. dist\\chromedriver.exe가 app.exe와 같은 폴더에 있어야 합니다.",
       );
     }
     logger.log("INFO", "using chromedriver", {
@@ -114,7 +117,7 @@ async function naverReserv(naverId, startDate, startDateTime) {
       .build();
 
     // 로그인 쿠키 확인 및 유도
-    const url = `${BASIC_URL}?area=bmp&lang=ko&map-search=1&service-target=map-pc&startDate=${startDate}&startDateTime=${startDateTime}&theme=place`;
+    const url = `${basicUrl}?area=bmp&lang=ko&map-search=1&service-target=map-pc&startDate=${startDate}&startDateTime=${startDateTime}&theme=place`;
     logger.log("INFO", "페이지 이동", url);
     await driver.get(url);
     logger.log("INFO", "로그인 상태 점검");
@@ -122,12 +125,12 @@ async function naverReserv(naverId, startDate, startDateTime) {
     if (!loggedIn) {
       logger.log("INFO", "로그인 필요: 로그인 페이지로 이동");
       await driver.get(
-        "https://nid.naver.com/nidlogin.login?realname=Y&svctype=262144"
+        "https://nid.naver.com/nidlogin.login?realname=Y&svctype=262144",
       );
       await waitForLoginCookies(driver, 180000).catch(() => {});
       logger.log(
         "INFO",
-        "로그인 완료/타임아웃 처리 후 브라우저 종료. 다음 실행에서 예약 진행"
+        "로그인 완료/타임아웃 처리 후 브라우저 종료. 다음 실행에서 예약 진행",
       );
       await driver.quit();
       return;
@@ -139,7 +142,7 @@ async function naverReserv(naverId, startDate, startDateTime) {
 
     logger.log("INFO", "페이지 하단으로 스크롤");
     await driver.executeScript(
-      "window.scrollTo(0, document.body.scrollHeight)"
+      "window.scrollTo(0, document.body.scrollHeight)",
     );
     await sleep(300);
 
@@ -147,11 +150,11 @@ async function naverReserv(naverId, startDate, startDateTime) {
 
     // 결제창으로 넘어가는 '다음' 버튼 찾기위한 객체
     const findNextButtonLocation = By.xpath(
-      '//*[@id="root"]/main/div[4]/div/button'
+      '//*[@id="root"]/main/div[4]/div/button',
     );
     const nextButton = await driver.wait(
       until.elementLocated(findNextButtonLocation),
-      10000
+      10000,
     );
     logger.log("INFO", "다음 버튼 찾기 완료");
 
@@ -160,7 +163,7 @@ async function naverReserv(naverId, startDate, startDateTime) {
     // '다읍' 버튼 뷰포트로 스크롤
     await driver.executeScript(
       "arguments[0].scrollIntoView({block:'center', inline:'center'});",
-      nextButton
+      nextButton,
     );
 
     // 가시성/활성 대기
@@ -188,25 +191,25 @@ async function naverReserv(naverId, startDate, startDateTime) {
       }
     }
     await driver.executeScript(
-      "window.scrollTo(0, document.body.scrollHeight)"
+      "window.scrollTo(0, document.body.scrollHeight)",
     );
     logger.log("INFO", "모든 체크박스에 체크 완료");
 
     // 결제하기 버튼 찾기
     logger.log("INFO", "결제하기 버튼 찾기 시작");
     const payBtnLocator = By.xpath(
-      "//button[normalize-space(.)='동의하고 결제하기']"
+      "//button[normalize-space(.)='동의하고 결제하기']",
     );
 
     const payBtn = await driver.wait(
       until.elementLocated(payBtnLocator),
-      10000
+      10000,
     );
     logger.log("INFO", "결제하기 버튼 찾기 완료");
     logger.log("INFO", "결제하기 버튼 뷰포트로 스크롤");
     await driver.executeScript(
       "arguments[0].scrollIntoView({block:'center', inline:'center'});",
-      payBtn
+      payBtn,
     );
 
     await driver.wait(until.elementIsVisible(payBtn), 5000).catch(() => {});
@@ -233,11 +236,24 @@ async function naverReserv(naverId, startDate, startDateTime) {
 async function main() {
   try {
     const naverId = await askQuestion("네이버 아이디를 입력하세요 : ");
+    // 상품 선택 입력 및 검증 루프
+    let productChoice;
+    while (true) {
+      productChoice = (
+        await askQuestion(
+          "어떤 상품을 선택하시겠습니까? (숫자만 입력 ex)1 )\n1)  잠실 롯데월드몰점 딸기밭케이크 1호 \n2) 잠실 롯데월드몰점 딸기밭케이크 미니\n> ",
+        )
+      ).trim();
+      if (PRODUCT_URLS[productChoice]) break;
+      console.log("유효한 선택지가 아닙니다. 1 또는 2를 입력해주세요.");
+    }
+    const basicUrl = PRODUCT_URLS[productChoice];
+    logger.log("INFO", "선택한 상품", { productChoice, basicUrl });
     const startDate = await askQuestion(
-      "예약 날짜를 입력하세요 (예: 2026-01-17): "
+      "예약 날짜를 입력하세요 (예: 2026-01-17): ",
     );
     const startTimeInput = await askQuestion(
-      "예약 시간을 입력하세요 (30분 단위, HHMM 형식, 예: 1600): "
+      "예약 시간을 입력하세요 (30분 단위, HHMM 형식, 예: 1600): ",
     );
 
     // HHMM 형식으로 입력받았을 경우 HH:MM으로 변환
@@ -249,17 +265,17 @@ async function main() {
     // 날짜 포맷 예시: 2026-01-17T16:00:00+09:00
     // URL 컴포넌트 인코딩
     const startDateTime = encodeURIComponent(
-      `${startDate}T${startTime}:00+09:00`
+      `${startDate}T${startTime}:00+09:00`,
     );
 
     console.log(
-      `입력된 정보: ${naverId}, ${startDate}, ${startTime} (변환전: ${startTimeInput})`
+      `입력된 정보: ${naverId}, ${startDate}, ${startTime} (변환전: ${startTimeInput})`,
     );
     console.log(`계산된 startDateTime: ${startDateTime}`);
 
     await askQuestion("\n실행하시겠습니까? 엔터키를 입력하면 바로 실행됩니다");
 
-    await naverReserv(naverId, startDate, startDateTime);
+    await naverReserv(naverId, startDate, startDateTime, basicUrl);
   } catch (e) {
     console.error("Main execution failed:", e);
     logger.log("FATAL", "Main execution failed", e);
