@@ -36,7 +36,7 @@ function askQuestion(query, providedAnswer) {
 }
 
 const { FileLogger } = require("./logger");
-const logger = new FileLogger();
+const logger = new FileLogger({ logFileName: "kitchen205.log" });
 
 function resolveChromedriverPath() {
   const besideExe = path.join(logger.baseDir, "chromedriver.exe");
@@ -85,6 +85,7 @@ const chrome = require("selenium-webdriver/chrome");
 const PRODUCT_URLS = {
   1: "https://m.booking.naver.com/booking/6/bizes/563788/items/4034774", // 잠실 딸기밭케이크 1호
   2: "https://m.booking.naver.com/booking/6/bizes/563788/items/4035008", // 잠실 딸기밭케이크 미니
+  999: "https://m.booking.naver.com/booking/6/bizes/551459/items/4033824", // 테스트용
 };
 
 // START_DATE, START_DATE_TIEM 의 yyyy-mm-dd 값은 같아야함
