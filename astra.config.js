@@ -10,7 +10,7 @@
 
 /** @type {Config} */
 module.exports = {
-  outFile: "dist/app.exe",
+  outFile: "dist/kitchen205.exe",
 
   esbuild: {
     // esbuild options (optional)
