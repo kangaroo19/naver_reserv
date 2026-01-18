@@ -2,12 +2,14 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 class FileLogger {
-  constructor() {
+  constructor(options = {}) {
+    const { logFileName } = options;
     const execBase = (process.execPath || "").toLowerCase();
     this.baseDir = execBase.endsWith("\\node.exe")
       ? process.cwd()
       : path.dirname(process.execPath);
-    this.logPath = path.join(this.baseDir, "app.log");
+    // baseDir 하위에 파일명만 지정하도록, 기본값은 app.log
+    this.logPath = path.join(this.baseDir, logFileName || "app.log");
 
     this.handleUncaught = (err) => this.log("FATAL", "uncaughtException", err);
     this.handleUnhandled = (reason) =>
@@ -64,8 +66,8 @@ class FileLogger {
   }
 }
 
-function createFileLogger() {
-  const l = new FileLogger();
+function createFileLogger(options = {}) {
+  const l = new FileLogger(options);
   return { baseDir: l.baseDir, logPath: l.logPath, log: l.log.bind(l) };
 }
 
