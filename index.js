@@ -269,12 +269,18 @@ async function main() {
       `${startDate}T${startTime}:00+09:00`,
     );
 
-    console.log(
-      `입력된 정보: ${naverId}, ${startDate}, ${startTime} (변환전: ${startTimeInput})`,
-    );
-    console.log(`계산된 startDateTime: ${startDateTime}`);
+    const productChoiceName =
+      productChoice === "1"
+        ? "잠실 롯데월드몰점 딸기밭케이크 1호"
+        : "잠실 롯데월드몰점 딸기밭케이크 미니";
 
-    await askQuestion("\n실행하시겠습니까? 엔터키를 입력하면 바로 실행됩니다");
+    console.log(
+      `\n\n\n입력된 정보: ${naverId}, ${startDate}, ${startTime}, ${productChoiceName} `,
+    );
+
+    await askQuestion(
+      "\n\n실행하시겠습니까? 엔터키를 입력하면 바로 실행됩니다",
+    );
 
     await naverReserv(naverId, startDate, startDateTime, basicUrl);
   } catch (e) {
