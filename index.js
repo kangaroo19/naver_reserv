@@ -196,10 +196,10 @@ async function naverReserv(naverId, startDate, startDateTime, basicUrl) {
     );
     logger.log("INFO", "모든 체크박스에 체크 완료");
 
-    // 결제하기 버튼 찾기
-    logger.log("INFO", "결제하기 버튼 찾기 시작");
+    // 예약하기 버튼 찾기
+    logger.log("INFO", "예약하기 버튼 찾기 시작");
     const payBtnLocator = By.xpath(
-      "//button[normalize-space(.)='동의하고 결제하기']",
+      "//button[normalize-space(.)='동의하고 예약하기']",
     );
 
     const payBtn = await driver.wait(
